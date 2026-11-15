@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#09090d">
+<title>NexChat — Admin Console (v2.8)</title>
+<style>
+:root{--bg:#08080c;--panel:#111118;--panel2:#171720;--line:#292934;--text:#f7f7fb;--muted:#9b9ba9;--pink:#ff2690;--purple:#9857ff;--good:#46d89a;--danger:#ff5575;--warn:#ffb800;--r:18px}
+*{box-sizing:border-box}html,body{margin:0;background:#050507;color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+body{min-height:100vh}
+.app{width:min(100%,900px);margin:auto;min-height:100vh;background:var(--bg);position:relative;padding-bottom:82px}
+button,input,textarea,select{font:inherit}button{border:0;color:inherit;cursor:pointer}
+
+/* Top Header */
+.top{height:64px;position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:rgba(8,8,12,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+.logo{font-size:20px;font-weight:900;letter-spacing:-.8px}.logo b{color:var(--pink)}.logo span{font-size:11px;background:var(--panel2);border:1px solid var(--line);padding:2px 8px;border-radius:20px;margin-left:8px;color:var(--pink)}
+.top-actions{display:flex;gap:10px;align-items:center}
+.badge{background:var(--danger);color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px}
+
+/* Main Layout */
+main{padding:16px}.page{display:none}.page.active{display:block}
+.section-title{font-size:20px;font-weight:850;margin:10px 0 16px;display:flex;justify-content:space-between;align-items:center}
+.muted{color:var(--muted)}.small{font-size:12px}
+
+/* Navigation Tabs */
+.admin-nav{display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;margin-bottom:16px;border-bottom:1px solid var(--line)}
+.admin-nav::-webkit-scrollbar{display:none}
+.nav-tab{padding:10px 16px;border-radius:12px;background:var(--panel);border:1px solid var(--line);color:var(--muted);font-size:13px;font-weight:750;white-space:nowrap}
+.nav-tab.active{background:linear-gradient(135deg,rgba(255,38,144,.15),rgba(152,87,255,.15));border-color:var(--pink);color:#fff}
+
+/* Dashboard Cards & Grid */
+.grid-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px}
+.stat-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.stat-card h3{margin:0 0 6px;font-size:24px;font-weight:900;color:#fff}
+.stat-card p{margin:0;font-size:12px;color:var(--muted)}
+.stat-card .trend{font-size:11px;color:var(--good);margin-top:6px;display:block}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
+
+/* Tables & Lists */
+.table-responsive{overflow-x:auto}
+table{width:100%;border-collapse:collapse;text-align:left;font-size:13px}
+th{background:var(--panel2);color:var(--muted);padding:12px;font-weight:700;border-bottom:1px solid var(--line)}
+td{padding:12px;border-bottom:1px solid var(--line);color:#eee}
+tr:last-child td{border-bottom:0}
+
+/* Buttons & Badges */
+.btn{background:linear-gradient(135deg,var(--pink),var(--purple));padding:8px 12px;border-radius:10px;font-weight:700;font-size:12px;display:inline-flex;align-items:center;gap:5px}
+.btn.secondary{background:var(--panel2);border:1px solid var(--line);color:#fff}
+.btn.danger{background:rgba(255,85,117,.15);color:#ff7f98;border:1px solid rgba(255,85,117,.3)}
+.btn.warn{background:rgba(255,184,0,.15);color:#ffc83b;border:1px solid rgba(255,184,0,.3)}
+.btn.good{background:rgba(70,216,154,.15);color:var(--good);border:1px solid rgba(70,216,154,.3)}
+.btn.sm{padding:5px 8px;font-size:11px}
+
+/* Custom Media Pick Button */
+.media-pick{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:linear-gradient(135deg,#211526,#171728);border:1px solid #45304c;color:#f7eaf4;padding:11px 15px;border-radius:13px;font-weight:800;font-size:12px;width:100%;cursor:pointer;margin-top:4px}
+.media-pick svg{width:20px;height:20px;color:#ff65b2;stroke:currentColor;fill:none;stroke-width:2.2;flex:none}
+.file-name{display:block;color:var(--muted);font-size:10px;margin-top:6px;overflow-wrap:anywhere}
+
+.status-pill{padding:3px 8px;border-radius:20px;font-size:10px;font-weight:800;display:inline-block}
+.status-pill.active{background:rgba(70,216,154,.15);color:var(--good)}
+.status-pill.banned{background:rgba(255,85,117,.15);color:var(--danger)}
+.status-pill.pending{background:rgba(255,184,0,.15);color:var(--warn)}
+
+/* Modal & Search */
+.searchbox{display:flex;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 12px;align-items:center;margin-bottom:14px}
+.searchbox input{flex:1;background:none;border:0;outline:0;color:#fff}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:none;align-items:center;justify-content:center;padding:14px}
+.modal-bg.show{display:flex}
+.modal{width:min(100%,500px);max-height:85vh;overflow-y:auto;background:#101017;border:1px solid var(--line);border-radius:20px;padding:20px}
+.close{float:right;background:var(--panel2);border:1px solid var(--line);border-radius:10px;width:32px;height:32px;color:#fff}
+.field{margin:12px 0}.field label{font-size:11px;color:#aaaab6;display:block;margin-bottom:6px}
+.field input,.field textarea,.field select{width:100%;background:#0b0b10;border:1px solid var(--line);border-radius:10px;color:#fff;padding:10px;outline:none}
+
+.toast{position:fixed;z-index:200;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);opacity:0;background:#24242d;border:1px solid #3b3b47;padding:11px 18px;border-radius:12px;font-size:12px;transition:.25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(min-width:901px){body{background:#020203}.app{border-left:1px solid #17171d;border-right:1px solid #17171d}}
+
+/* v2.8 additions */
+.notice{background:rgba(152,87,255,.12);border:1px solid rgba(152,87,255,.35);border-radius:12px;padding:10px 12px;font-size:12px;line-height:1.5;margin:0 0 14px;color:#ddd}
+.result-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.result-row:last-child{border-bottom:0}
+.btn.danger.sm:disabled{opacity:.5}
+</style>
+<style id="nexchat-auth">
+#nexAuth,#admAuth{position:fixed;inset:0;z-index:900;display:none;align-items:center;justify-content:center;padding:22px;color:var(--text,#f7f7fb);overflow-y:auto;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+background:radial-gradient(60% 40% at 15% 8%,rgba(255,38,144,.30),transparent 70%),radial-gradient(55% 40% at 90% 92%,rgba(152,87,255,.32),transparent 70%),#08080c}
+html.nex-needs-auth #nexAuth,html.adm-locked #admAuth{display:flex}
+html.nex-needs-auth .app,html.adm-locked .app{display:none!important}
+.nxa-card{width:min(100%,380px);margin:auto;padding:24px 18px 20px;border-radius:30px;border:1px solid rgba(255,255,255,.16);
+background:linear-gradient(155deg,rgba(255,255,255,.16),rgba(255,255,255,.05) 55%,rgba(255,255,255,.09));
+box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -1px 0 rgba(255,255,255,.05),0 22px 60px rgba(0,0,0,.45)}
+.nxa-logo{font-size:32px;font-weight:800;letter-spacing:-.6px;text-align:center}.nxa-logo b{background:linear-gradient(90deg,var(--pink,#ff2690),var(--purple,#9857ff));-webkit-background-clip:text;background-clip:text;color:transparent}
+.nxa-sub{text-align:center;color:var(--muted,#9b9ba9);font-size:13px;margin:4px 0 16px}
+.nxa-tabs{display:flex;gap:6px;padding:4px;border-radius:99px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.10);margin-bottom:12px;box-shadow:inset 0 1px 2px rgba(0,0,0,.25)}
+.nxa-tabs button{flex:1;padding:11px;border-radius:99px;background:transparent;font-weight:700;font-size:14px;color:var(--muted,#9b9ba9)}
+.nxa-tabs button.on{background:linear-gradient(135deg,var(--pink,#ff2690),var(--purple,#9857ff));color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 6px 16px rgba(255,38,144,.30)}
+.nxa-card label{display:block;font-size:12px;font-weight:700;color:var(--muted,#9b9ba9);margin:11px 4px 6px}
+.nxa-f{position:relative}
+.nxa-f>svg{position:absolute;left:14px;top:50%;width:19px;height:19px;margin-top:-9.5px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;color:var(--muted,#9b9ba9);pointer-events:none}
+.nxa-f input,.nxa-f select{width:100%;padding:14px 14px 14px 44px;border-radius:16px;border:1px solid rgba(255,255,255,.13);background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.04));box-shadow:inset 0 1px 0 rgba(255,255,255,.12);color:var(--text,#f7f7fb);font-size:16px;outline:0;-webkit-appearance:none;appearance:none}
+.nxa-f select option{color:#111}
+.nxa-f input:focus,.nxa-f select:focus{border-color:var(--pink,#ff2690);box-shadow:0 0 0 3px rgba(255,38,144,.18),inset 0 1px 0 rgba(255,255,255,.12)}
+.nxa-f input:-webkit-autofill{-webkit-text-fill-color:var(--text,#f7f7fb);box-shadow:0 0 0 40px #1c1b27 inset}
+.nxa-eye{position:absolute;right:6px;top:50%;margin-top:-18px;width:36px;height:36px;border-radius:12px;background:transparent;display:grid;place-items:center;color:var(--muted,#9b9ba9)}
+.nxa-eye svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.nxa-f.pw input{padding-right:48px}
+.nxa-err{min-height:18px;margin:12px 4px 0;font-size:13px;color:var(--danger,#ff5575);line-height:1.4}
+.nxa-ok{color:var(--good,#46d89a)}
+.nxa-go{width:100%;margin-top:10px;padding:15px;border-radius:18px;font-weight:800;font-size:15px;color:#fff;background:linear-gradient(135deg,var(--pink,#ff2690),var(--purple,#9857ff));box-shadow:inset 0 1px 0 rgba(255,255,255,.38),0 10px 24px rgba(255,38,144,.30)}
+.nxa-go:active{transform:scale(.985)}.nxa-go:disabled{opacity:.6}
+.nxa-link{display:block;margin:12px auto 0;background:transparent;color:var(--muted,#9b9ba9);font-size:13px;text-decoration:underline}
+.nxa-note{text-align:center;color:var(--muted,#9b9ba9);font-size:11px;margin-top:14px;line-height:1.5}
+body[data-theme="white"] #nexAuth{color:#1b1a26;--text:#1b1a26;--muted:#6c6a7c;--line:#dedbea;background:radial-gradient(60% 40% at 15% 8%,rgba(255,38,144,.18),transparent 70%),radial-gradient(55% 40% at 90% 92%,rgba(152,87,255,.20),transparent 70%),#f4f3fa}
+body[data-theme="white"] .nxa-card{border-color:rgba(255,255,255,.9);background:linear-gradient(155deg,rgba(255,255,255,.92),rgba(255,255,255,.62));box-shadow:inset 0 1px 0 #fff,0 18px 46px rgba(60,50,110,.14)}
+body[data-theme="white"] .nxa-f input,body[data-theme="white"] .nxa-f select{border-color:#dedbea;background:linear-gradient(160deg,#fff,#f1effa);box-shadow:inset 0 1px 0 #fff}
+body[data-theme="white"] .nxa-tabs{background:rgba(120,110,170,.10);border-color:rgba(120,110,170,.15)}
+</style>
+<script>
+window.NEX_FIREBASE_CONFIG={apiKey:"AIzaSyBkGjbVLvD1uvOl8oSdr0AY8Kg5Go8gWNY",authDomain:"nextchat-42c16.firebaseapp.com",projectId:"nextchat-42c16",appId:"1:254068294612:web:33a91b2f02f16184e28c41",messagingSenderId:"254068294612"}; /* storageBucket added later with photo/video upload */
+if(window.NEX_FIREBASE_CONFIG&&window.NEX_FIREBASE_CONFIG.apiKey)document.documentElement.classList.add('adm-locked');
+/* To switch on real-time mode, paste your Firebase web config here (same one as the user app):
+window.NEX_FIREBASE_CONFIG={apiKey:"...",authDomain:"...",projectId:"...",storageBucket:"...",appId:"..."};
+Leave it commented for the local demo mode. */
+</script>
+</head>
+<body>
+<div id="admAuth" role="dialog" aria-label="Admin login">
+ <form class="nxa-card" id="admForm" novalidate>
+  <div class="nxa-logo">Nex<b>Chat</b></div>
+  <p class="nxa-sub">Admin console · authorised accounts only</p>
+  <label for="admEmail">Admin email</label>
+  <div class="nxa-f"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7.5 8 6 8-6"/></svg><input id="admEmail" type="email" autocomplete="username" autocapitalize="none" placeholder="admin@email.com"></div>
+  <label for="admPw">Password</label>
+  <div class="nxa-f pw"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="9.5" rx="3"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg><input id="admPw" type="password" autocomplete="current-password" placeholder="••••••••"><button type="button" class="nxa-eye" aria-label="Show password" onclick="var i=document.getElementById('admPw');i.type=i.type==='password'?'text':'password'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></svg></button></div>
+  <div class="nxa-err" id="admErr" role="alert"></div>
+  <button class="nxa-go" id="admGo" type="submit">Log in</button>
+  <div class="nxa-note">Admin rights come from a record in the database, not from this page.</div>
+ </form>
+</div>
+
+<div class="app">
+  <!-- Header -->
+  <header class="top">
+    <div class="logo">Nex<b>Chat</b> <span>Admin v2.8</span></div>
+    <div class="top-actions">
+      <button class="btn secondary sm" id="modeBtn" onclick="modeInfo()">Live</button>
+      <button class="btn danger sm" onclick="logout()">Logout</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="demoNote" class="notice" style="display:none"></div>
+
+    <!-- Navigation Tabs -->
+    <nav class="admin-nav">
+      <button class="nav-tab active" onclick="switchTab('dashboard', this)">Dashboard</button>
+      <button class="nav-tab" onclick="switchTab('users', this)">Users</button>
+      <button class="nav-tab" onclick="switchTab('posts', this)">Posts & Resources <span class="badge" id="studyBadge">0</span></button>
+      <button class="nav-tab" onclick="switchTab('reports', this)">Reports <span class="badge" id="reportBadge">0</span></button>
+      <button class="nav-tab" onclick="switchTab('audit', this)">Audit Log</button>
+      <button class="nav-tab" onclick="switchTab('settings', this)">System Config</button>
+    </nav>
+
+    <!-- TAB 1: DASHBOARD -->
+    <section id="dashboard" class="page active">
+      <div class="grid-stats">
+        <div class="stat-card"><p>Total Users</p><h3 id="stUsers">0</h3><span class="trend" id="stBanned">0 banned</span></div>
+        <div class="stat-card"><p>Live Resources</p><h3 id="stLive">0</h3><span class="trend">Approved study material</span></div>
+        <div class="stat-card"><p>Pending Approvals</p><h3 id="stPending" style="color:var(--warn)">0</h3><span class="trend" style="color:var(--warn)">Study resources</span></div>
+        <div class="stat-card"><p>Pending Reports</p><h3 id="stReports" style="color:var(--danger)">0</h3><span class="trend" style="color:var(--danger)">Needs action</span></div>
+      </div>
+
+      <div class="card">
+        <div class="section-title" style="font-size:16px;margin:0 0 12px">Quick Admin Actions</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn" onclick="openModal('broadcast')">📢 System Announcement</button>
+          <button class="btn secondary" onclick="openModal('addResource')">📚 Upload Official Material</button>
+          <button class="btn warn" onclick="switchTab('posts', document.querySelectorAll('.nav-tab')[2])">⏳ Approve Study Materials</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title" style="font-size:16px;margin:0 0 12px">Recent announcements</div>
+        <div id="annList"></div>
+      </div>
+    </section>
+
+    <!-- TAB 2: USER MANAGEMENT -->
+    <section id="users" class="page">
+      <div class="section-title">User Management <button class="btn sm" onclick="renderUsers();toast('User list refreshed')">Refresh</button></div>
+
+      <div class="searchbox">
+        <input id="userSearch" oninput="filterUsers()" placeholder="Search user by name, username or email...">
+      </div>
+
+      <div class="card">
+        <div class="table-responsive">
+          <table id="userTable">
+            <thead>
+              <tr><th>User</th><th>Role</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: POSTS & STUDY APPROVALS -->
+    <section id="posts" class="page">
+      <div class="section-title">Pending Study Material Approvals</div>
+
+      <div class="card" style="border-color:var(--warn)">
+        <div class="section-title" style="font-size:15px;margin:0 0 10px;color:var(--warn)">⏳ Materials Submitted by Users (Needs Admin Approval)</div>
+        <div class="table-responsive">
+          <table id="pendingStudyTable">
+            <thead>
+              <tr><th>Submitted By</th><th>Class / Subject</th><th>Resource Title</th><th>Actions</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section-title" style="font-size:18px;margin-top:24px">Live Content & Resources</div>
+      <div class="card">
+        <div class="table-responsive">
+          <table id="liveContentTable">
+            <thead>
+              <tr><th>Author</th><th>Content Type</th><th>Details</th><th>Action</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: REPORTS -->
+    <section id="reports" class="page">
+      <div class="section-title">Reported Content</div>
+      <div id="reportList"></div>
+      <div class="section-title" style="font-size:16px;margin-top:22px">Resolved</div>
+      <div id="reportDone"></div>
+    </section>
+
+    <!-- TAB 5: AUDIT LOG -->
+    <section id="audit" class="page">
+      <div class="section-title">Audit Log</div>
+      <div class="card">
+        <div class="table-responsive">
+          <table id="auditTable">
+            <thead><tr><th>When</th><th>Admin</th><th>Action</th><th>Target</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 6: SYSTEM CONFIG -->
+    <section id="settings" class="page">
+      <div class="section-title">System Settings</div>
+      <div class="card">
+        <div class="field">
+          <label>Platform Name</label>
+          <input id="setName" maxlength="80" value="NexChat — Social, Study & Community">
+        </div>
+        <div class="field">
+          <label>Require Admin Approval for Study Uploads</label>
+          <select id="setApproval"><option value="yes" selected>Yes (Admin must approve every PDF/Note)</option><option value="no">No (Auto-publish instantly)</option></select>
+        </div>
+        <button class="btn" onclick="saveSettings()">Save System Settings</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Modal Container -->
+<div id="modal" class="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* ===== NexBridge: ONE shared data layer used by both the user app and the admin app =====
+   Same code lives in both files. It has two modes:
+   - Firebase mode: set window.NEX_FIREBASE_CONFIG = {apiKey, authDomain, projectId, ...} (see the line just above this script).
+     Data then lives in Firestore collections and both apps update in real time.
+   - Local demo mode (default): data lives in this browser's localStorage and syncs live between tabs of the SAME website address.
+     So the user app and admin app must be opened from the same domain, e.g. /index.html and /admin.html on one host.
+   Collections: users, study, reports, announcements, audit, settings */
+const NexBridge=(function(){
+'use strict';
+const PFX='nexbridge:';
+const subs={},mem={},listening={};
+const cfg=(typeof window!=='undefined'&&window.NEX_FIREBASE_CONFIG&&window.NEX_FIREBASE_CONFIG.apiKey)?window.NEX_FIREBASE_CONFIG:null;
+let mode=cfg?'firebase':'local',fb=null,ready=Promise.resolve();
+
+function lsRead(col){try{const v=JSON.parse(localStorage.getItem(PFX+col)||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{}}catch(e){return mem[col]||{}}}
+function lsWrite(col,obj){mem[col]=obj;try{localStorage.setItem(PFX+col,JSON.stringify(obj))}catch(e){}}
+const table=col=>mode==='local'?lsRead(col):(mem[col]||{});
+const list=col=>Object.entries(table(col)).map(([id,d])=>Object.assign({},d,{id})).sort((a,b)=>(b.ts||0)-(a.ts||0));
+function emit(col){(subs[col]||[]).forEach(cb=>{try{cb(list(col))}catch(e){console.error('NexBridge listener',e)}})}
+window.addEventListener('storage',e=>{if(e.key&&e.key.indexOf(PFX)===0)emit(e.key.slice(PFX.length))});
+
+if(cfg){
+  ready=(async()=>{
+    const base='https://www.gstatic.com/firebasejs/10.12.2/';
+    const mods=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-firestore.js'),import(base+'firebase-auth.js')]);
+    const app=mods[0].initializeApp(cfg);
+    fb={db:mods[1].getFirestore(app),fs:mods[1],auth:mods[2].getAuth(app),au:mods[2]};
+    try{await fb.auth.authStateReady()}catch(e){}
+  })().catch(e=>{console.error('Firebase could not start, falling back to the local demo store',e);window.NEX_FB_ERR=String((e&&(e.code||e.message))||e);mode='local';Object.keys(subs).forEach(emit)});
+}
+function listen(col){
+  if(listening[col])return;listening[col]=true;
+  ready.then(()=>{
+    if(mode!=='firebase'||!fb)return;
+    fb.fs.onSnapshot(fb.fs.collection(fb.db,col),snap=>{const t={};snap.forEach(d=>{t[d.id]=d.data()});mem[col]=t;emit(col)},err=>console.error('NexBridge snapshot',col,err));
+  });
+}
+const uid=p=>(p||'x')+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const clean=d=>JSON.parse(JSON.stringify(d,(k,v)=>v===undefined?null:v));
+function put(col,id,data){
+  data=clean(data);
+  if(mode==='local'){const t=lsRead(col);t[id]=Object.assign({},t[id],data);lsWrite(col,t);emit(col);return Promise.resolve(id)}
+  const t=Object.assign({},mem[col]);t[id]=Object.assign({},t[id],data);mem[col]=t;emit(col);
+  return ready.then(()=>{if(mode==='firebase')return fb.fs.setDoc(fb.fs.doc(fb.db,col,id),data,{merge:true});}).then(()=>id);
+}
+function add(col,data){const id=uid(col[0]);put(col,id,Object.assign({ts:Date.now()},data));return id}
+function remove(col,id){
+  if(mode==='local'){const t=lsRead(col);delete t[id];lsWrite(col,t);emit(col);return Promise.resolve()}
+  const t=Object.assign({},mem[col]);delete t[id];mem[col]=t;emit(col);
+  return ready.then(()=>{if(mode==='firebase')return fb.fs.deleteDoc(fb.fs.doc(fb.db,col,id))});
+}
+function on(col,cb){
+  (subs[col]=subs[col]||new Set()).add(cb);
+  listen(col);
+  try{cb(list(col))}catch(e){console.error(e)}
+  return()=>subs[col].delete(cb);
+}
+
+/* ----- Firebase Auth (Email/Password). Admin = a Firestore doc admins/{uid} that only you create in the Firebase console. ----- */
+const SK='nexchat-session';
+const auth={
+  session(){try{return JSON.parse(localStorage.getItem(SK)||'null')}catch(e){return null}},
+  saveSession(p){try{localStorage.setItem(SK,JSON.stringify(p))}catch(e){}},
+  clearSession(){try{localStorage.removeItem(SK)}catch(e){}},
+  async need(){await ready;if(mode!=='firebase'||!fb)throw new Error('Firebase could not start'+(window.NEX_FB_ERR?' ['+window.NEX_FB_ERR.slice(0,140)+']':'')+'. Check internet, or open the link in Chrome (not inside another app).')},
+  async profile(){await auth.need();const u=fb.auth.currentUser;if(!u)return null;
+    const q=fb.fs.query(fb.fs.collection(fb.db,'users'),fb.fs.where('uid','==',u.uid),fb.fs.limit(1));
+    const s=await fb.fs.getDocs(q);if(s.empty)return null;const d=s.docs[0],v=d.data();
+    return {uid:u.uid,handle:d.id,name:v.name||d.id,cls:v.cls||''}},
+  async signIn(email,pw){await auth.need();await fb.au.signInWithEmailAndPassword(fb.auth,email,pw);return auth.profile()},
+  async signUp(email,pw,handle,name,cls){await auth.need();
+    const cred=await fb.au.createUserWithEmailAndPassword(fb.auth,email,pw);
+    try{
+      const ref=fb.fs.doc(fb.db,'users',handle),ex=await fb.fs.getDoc(ref);
+      if(ex.exists()){const e=new Error('taken');e.code='nex/handle-taken';throw e}
+      await fb.fs.setDoc(ref,{uid:cred.user.uid,name:name,cls:cls,ts:Date.now(),seen:Date.now()});
+      try{await fb.au.updateProfile(cred.user,{displayName:name})}catch(e){}
+    }catch(e){try{await fb.au.deleteUser(cred.user)}catch(_){}throw e}
+    const p={uid:cred.user.uid,handle:handle,name:name,cls:cls};auth.saveSession(p);return p},
+  async signOut(){try{await ready;if(fb)await fb.au.signOut(fb.auth)}catch(e){}auth.clearSession()},
+  async reset(email){await auth.need();return fb.au.sendPasswordResetEmail(fb.auth,email)},
+  onChange(cb){ready.then(()=>{if(mode==='firebase'&&fb)fb.au.onAuthStateChanged(fb.auth,cb)})},
+  async isAdmin(){try{await auth.need();const u=fb.auth.currentUser;if(!u)return false;return (await fb.fs.getDoc(fb.fs.doc(fb.db,'admins',u.uid))).exists()}catch(e){return false}}
+};
+return {mode:()=>mode,ready:()=>ready,auth,list,get:(col,id)=>table(col)[id]?Object.assign({},table(col)[id],{id}):null,put,add,remove,on,uid};
+})();
+
+</script>
+<script>
+const B = NexBridge;
+let ADMIN = 'admin';   // demo mode only. In Firebase mode it becomes the logged-in admin's email after the admins/{uid} check
+const $ = id => document.getElementById(id);
+const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ago = ts => { const s = Math.max(0, (Date.now() - ts) / 1000); if (s < 60) return 'just now'; if (s < 3600) return Math.floor(s/60) + 'm ago'; if (s < 86400) return Math.floor(s/3600) + 'h ago'; return Math.floor(s/86400) + 'd ago'; };
+const size = n => n > 1048576 ? (n/1048576).toFixed(1) + ' MB' : Math.max(1, Math.round((n||0)/1024)) + ' KB';
+const MAX_MB = 25;
+const CLASSES = ['Class 6','Class 7','Class 8','Class 9','Class 10','SSC Candidate','HSC Candidate','Honours / Degree','University Level'];
+const audit = (action, target) => B.add('audit', { admin: ADMIN, action, target: String(target || '') });
+
+/* ---- first run in local demo mode: the example rows that used to be hard-coded in this page ---- */
+(function seed() {
+  if (B.mode() !== 'local') return;
+  try { if (localStorage.getItem('nexbridge:seeded')) return; localStorage.setItem('nexbridge:seeded', '1'); } catch (e) { return; }
+  const now = Date.now();
+  B.put('users', 'nur', { name: 'Nur Mohammod', cls: 'Class 9', role: 'User', status: 'active' });
+  B.put('users', 'arin', { name: 'Arin', cls: 'Class 9', role: 'Moderator', status: 'active' });
+  B.put('study', 's_seed1', { ts: now - 20*60000, title: 'Chapter 2 — Motion Notes.pdf', cls: 'Class 9', subject: 'Physics', chapter: 'Chapter 2', by: 'arin', status: 'pending', fileName: 'Chapter 2 — Motion Notes.pdf', fileType: 'application/pdf' });
+  B.put('study', 's_seed2', { ts: now - 60*60000, title: 'Organic Chemistry Formula Sheet.pdf', cls: 'HSC Candidate', subject: 'Chemistry', chapter: '', by: 'nur', status: 'pending', fileName: 'Organic Chemistry Formula Sheet.pdf', fileType: 'application/pdf' });
+  B.put('study', 's_seed3', { ts: now - 5*3600000, title: 'Physical Quantities & Measurement', cls: 'Class 9', subject: 'Physics', chapter: 'Chapter 1', by: 'physics', status: 'approved', reviewedAt: now - 4*3600000 });
+  B.put('reports', 'r104', { ts: now - 30*60000, targetType: 'user', target: 'unknown_user', targetLabel: '@unknown_user', reason: 'Abuse/Spam', details: 'Promoting external links and spamming in group chat.', by: 'nur', status: 'open' });
+})();
+
+/* ---- tabs and modal ---- */
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  $(tabId).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+const modal = $('modal'), modalContent = $('modalContent');
+function show(html) { modalContent.innerHTML = '<button class="close" onclick="closeModal()">×</button>' + html; modal.classList.add('show'); }
+function closeModal() { modal.classList.remove('show'); }
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2500); }
+async function logout() { if (B.mode() !== 'firebase') { toast('Demo mode: there is no login here'); return; } await B.auth.signOut(); location.reload(); }
+function modeInfo() { toast(B.mode() === 'firebase' ? 'Connected to Firebase. Changes are live for every user.' : 'Local demo data. Connect Firebase to share data between devices.'); }
+
+function openModal(type) {
+  if (type === 'broadcast') {
+    show(`<div class="section-title" style="font-size:16px">Send Global Notification</div>
+      <div class="field"><label>Title</label><input id="annTitle" maxlength="80" placeholder="System Maintenance / New Feature"></div>
+      <div class="field"><label>Message</label><textarea id="annMsg" maxlength="400" placeholder="Write announcement..."></textarea></div>
+      <button class="btn" onclick="sendAnnouncement()">Broadcast Now</button>`);
+  } else if (type === 'addResource') {
+    show(`<div class="section-title" style="font-size:16px">Publish Official Resource</div>
+      <div class="field"><label>Subject</label><input id="resSubject" maxlength="100" placeholder="e.g. Physics Chapter 2"></div>
+      <div class="field"><label>Class Level</label><select id="resClass">${CLASSES.map(c => `<option>${esc(c)}</option>`).join('')}</select></div>
+      <div class="field">
+        <label>Attach File</label>
+        <button class="media-pick" type="button" onclick="$('adminResourceFile').click()">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3.5" width="18" height="17" rx="3"/><circle cx="9" cy="9" r="1.7"/><path d="m4 17 5-5 3 3 2-2 6 6"/></svg>
+          Upload File
+        </button>
+        <input id="adminResourceFile" type="file" accept=".pdf,image/*" hidden onchange="showPickedFileName(this, 'adminResourceName')">
+        <span class="file-name" id="adminResourceName">No file chosen</span>
+      </div>
+      <button class="btn" onclick="publishOfficial()">Upload Material</button>`);
+  }
+}
+function showPickedFileName(input, targetId) {
+  const target = $(targetId);
+  if (input.files && input.files[0]) { target.textContent = input.files[0].name; toast('Selected: ' + input.files[0].name); }
+}
+function openPreview(title, type, details) {
+  show(`<div class="section-title" style="font-size:16px">Content Preview</div>
+    <div class="card" style="margin:10px 0;background:var(--panel2)">
+      <b style="font-size:15px;display:block;margin-bottom:6px">${esc(title)}</b>
+      <span class="status-pill active" style="margin-bottom:8px">${esc(type)}</span>
+      <p class="muted small" style="margin:6px 0">${esc(details)}</p>
+    </div>
+    <button class="btn secondary" onclick="closeModal()">Close Preview</button>`);
+}
+
+/* ---- announcements ---- */
+function sendAnnouncement() {
+  const title = $('annTitle').value.trim(), message = $('annMsg').value.trim();
+  if (title.length < 3 || message.length < 3) { toast('Write a title and a message'); return; }
+  B.add('announcements', { title, message, by: ADMIN });
+  audit('Sent announcement', title);
+  closeModal(); toast('Announcement sent to all users!');
+}
+function renderAnn(list) {
+  $('annList').innerHTML = list.length ? list.slice(0, 8).map(a => `<div class="result-row"><div style="flex:1;min-width:0"><b>${esc(a.title)}</b><div class="muted small">${esc(a.message)} · ${esc(ago(a.ts))}</div></div><button class="btn danger sm" data-act="ann-del" data-id="${esc(a.id)}">Delete</button></div>`).join('') : '<div class="muted small">No announcements yet.</div>';
+}
+
+/* ---- users ---- */
+let userList = [];
+function filterUsers() { renderUsers(); }
+function renderUsers(list) {
+  if (list) userList = list;
+  const q = ($('userSearch').value || '').trim().toLowerCase();
+  const rows = userList.filter(u => !q || (u.id + ' ' + (u.name || '') + ' ' + (u.email || '')).toLowerCase().includes(q));
+  $('userTable').querySelector('tbody').innerHTML = rows.length ? rows.map(u => {
+    const banned = u.status === 'banned';
+    return `<tr><td><b>${esc(u.name || u.id)}</b><br><span class="muted small">@${esc(u.id)}${u.cls ? ' · ' + esc(u.cls) : ''}</span></td>
+      <td>${esc(u.role || 'User')}</td>
+      <td><span class="status-pill ${banned ? 'banned' : 'active'}">${banned ? 'Banned' : 'Active'}</span></td>
+      <td><button class="btn secondary sm" data-act="user-edit" data-id="${esc(u.id)}">Edit</button>
+          <button class="btn ${banned ? 'secondary' : 'danger'} sm" data-act="${banned ? 'user-unban' : 'user-ban'}" data-id="${esc(u.id)}">${banned ? 'Unban' : 'Ban'}</button></td></tr>`;
+  }).join('') : '<tr><td colspan="4" class="muted">No users found.</td></tr>';
+}
+function editUser(id) {
+  const u = B.get('users', id); if (!u) return;
+  show(`<div class="section-title" style="font-size:16px">Edit @${esc(id)}</div>
+    <div class="field"><label>Role</label><select id="roleSel">${['User','Moderator','Admin'].map(r => `<option${(u.role || 'User') === r ? ' selected' : ''}>${r}</option>`).join('')}</select></div>
+    <button class="btn" data-act="role-save" data-id="${esc(id)}">Save</button>`);
+}
+function saveRole(id) {
+  const role = $('roleSel').value;
+  B.put('users', id, { role }); audit('Changed role to ' + role, '@' + id);
+  closeModal(); toast('Role updated');
+}
+function banModal(id, reportId, prefill) {
+  const u = B.get('users', id) || {};
+  if ((u.role || 'User') === 'Admin') { toast('Admins cannot be banned. Change the role first.'); return; }
+  show(`<div class="section-title" style="font-size:16px">Ban @${esc(id)}</div>
+    <div class="notice">The user is signed out of NexChat and sees a suspension screen.</div>
+    <div class="field"><label>Reason (shown to the user)</label><textarea id="banReason" maxlength="200">${esc(prefill || '')}</textarea></div>
+    <button class="btn danger" data-act="ban-go" data-id="${esc(id)}" data-rid="${esc(reportId || '')}">Ban user</button>`);
+}
+function confirmBan(id, reportId) {
+  const reason = $('banReason').value.trim();
+  B.put('users', id, { name: (B.get('users', id) || {}).name || id, status: 'banned', banReason: reason, bannedAt: Date.now() });
+  audit('Banned user', '@' + id + (reason ? ' · ' + reason : ''));
+  if (reportId) B.put('reports', reportId, { status: 'actioned', outcome: 'The reported account was banned', resolvedAt: Date.now(), resolvedBy: ADMIN });
+  closeModal(); toast('@' + id + ' has been banned.');
+}
+function unban(id) {
+  B.put('users', id, { status: 'active', banReason: '' });
+  audit('Unbanned user', '@' + id); toast('@' + id + ' account unbanned.');
+}
+
+/* ---- study approvals ---- */
+function renderStudy(list) {
+  const pending = list.filter(s => s.status === 'pending'), live = list.filter(s => s.status === 'approved');
+  $('pendingStudyTable').querySelector('tbody').innerHTML = pending.length ? pending.map(s => `<tr>
+      <td><b>@${esc(s.by)}</b><br><span class="muted small">${esc(ago(s.ts))}</span></td>
+      <td>${esc([s.cls, s.subject].filter(Boolean).join(' · '))}</td>
+      <td>${esc(s.title)}</td>
+      <td><button class="btn secondary sm" data-act="study-view" data-id="${esc(s.id)}">View</button>
+          <button class="btn good sm" data-act="study-ok" data-id="${esc(s.id)}">Approve</button>
+          <button class="btn danger sm" data-act="study-no" data-id="${esc(s.id)}">Reject</button></td></tr>`).join('')
+    : '<tr><td colspan="4" class="muted">Nothing is waiting for approval.</td></tr>';
+  $('liveContentTable').querySelector('tbody').innerHTML = live.length ? live.map(s => `<tr>
+      <td>${s.official ? '<b>Official</b>' : '@' + esc(s.by)}</td>
+      <td>${esc(fileKind(s))}</td>
+      <td>${esc(s.title)}${s.cls ? ' (' + esc(s.cls) + ')' : ''}</td>
+      <td><button class="btn secondary sm" data-act="study-view" data-id="${esc(s.id)}">View</button>
+          <button class="btn danger sm" data-act="study-del" data-id="${esc(s.id)}">Delete</button></td></tr>`).join('')
+    : '<tr><td colspan="4" class="muted">No live resources yet.</td></tr>';
+  const badge = $('studyBadge'); badge.textContent = pending.length; badge.style.display = pending.length ? '' : 'none';
+  $('stPending').textContent = pending.length; $('stLive').textContent = live.length;
+}
+const fileKind = s => (s.fileType || '').startsWith('image/') ? 'Image' : (s.fileType || '').startsWith('video/') ? 'Video' : 'PDF Document';
+function viewStudy(id) {
+  const s = B.get('study', id); if (!s) return;
+  openPreview(s.title, fileKind(s), ['By @' + s.by, [s.cls, s.subject, s.chapter].filter(Boolean).join(' · '), s.fileName ? s.fileName + (s.fileSize ? ' (' + size(s.fileSize) + ')' : '') : '', s.status].filter(Boolean).join(' · '));
+}
+function approveMaterial(id) {
+  const s = B.get('study', id); if (!s) return;
+  B.put('study', id, { status: 'approved', reviewedAt: Date.now(), reviewedBy: ADMIN, rejectReason: '' });
+  audit('Approved resource', s.title + ' (@' + s.by + ')'); toast('Study material approved & live on app!');
+}
+function rejectModal(id) {
+  const s = B.get('study', id); if (!s) return;
+  show(`<div class="section-title" style="font-size:16px">Reject resource</div>
+    <div class="notice">${esc(s.title)}</div>
+    <div class="field"><label>Reason (the user sees this)</label><select id="rejSel"><option>Low quality or unreadable</option><option>Wrong class or subject</option><option>Copyrighted material</option><option>Inappropriate content</option><option>Other</option></select></div>
+    <button class="btn danger" data-act="rej-go" data-id="${esc(id)}">Reject</button>`);
+}
+function rejectMaterial(id) {
+  const s = B.get('study', id), reason = $('rejSel').value;
+  B.put('study', id, { status: 'rejected', rejectReason: reason, reviewedAt: Date.now(), reviewedBy: ADMIN });
+  audit('Rejected resource', (s ? s.title : id) + ' · ' + reason); closeModal(); toast('Study material rejected.');
+}
+function deleteStudy(id) {
+  const s = B.get('study', id); if (!s) return;
+  if (!confirm('Delete "' + s.title + '" from the platform?')) return;
+  B.put('study', id, { status: 'removed', removedAt: Date.now() });
+  audit('Deleted resource', s.title); toast('Item deleted from platform.');
+}
+function publishOfficial() {
+  const subject = $('resSubject').value.trim(), cls = $('resClass').value, f = $('adminResourceFile').files && $('adminResourceFile').files[0];
+  if (subject.length < 3) { toast('Write a subject or title'); return; }
+  if (!f) { toast('Choose a file first'); return; }
+  if (!(f.type === 'application/pdf' || f.type.startsWith('image/'))) { toast('Only PDF or image files'); return; }
+  if (f.size > MAX_MB * 1048576) { toast('File is too large (max ' + MAX_MB + ' MB)'); return; }
+  B.add('study', { title: subject, cls, subject, by: ADMIN, official: true, status: 'approved', fileName: f.name, fileType: f.type, fileSize: f.size, reviewedAt: Date.now() });
+  audit('Published official resource', subject); closeModal(); toast('Official resource published!');
+}
+
+/* ---- reports ---- */
+const isHandle = t => /^[a-z0-9_.]{3,30}$/i.test(t || '');
+function renderReports(list) {
+  const open = list.filter(r => r.status === 'open'), done = list.filter(r => r.status !== 'open');
+  const short = r => '#' + String(r.id).replace(/\D/g, '').slice(-4).padStart(3, '0');
+  $('reportList').innerHTML = open.length ? open.map(r => {
+    const banTarget = (r.targetType === 'user' || r.targetType === 'post') && isHandle(r.target);
+    return `<div class="card"><b>Report ${esc(short(r))} — ${esc(r.reason)}</b>
+      <p class="muted small" style="margin:4px 0 10px">Reported ${esc(r.targetType)}: ${esc(r.targetLabel || r.target)} | Reported By: @${esc(r.by)} | ${esc(ago(r.ts))}</p>
+      ${r.details ? `<div style="background:var(--panel2);padding:10px;border-radius:10px;font-size:12px;margin-bottom:10px;border:1px solid var(--line)">"${esc(r.details)}"</div>` : ''}
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${banTarget ? `<button class="btn danger sm" data-act="rep-ban" data-id="${esc(r.id)}">Ban User</button>` : ''}
+        <button class="btn warn sm" data-act="rep-act" data-id="${esc(r.id)}">Mark action taken</button>
+        <button class="btn secondary sm" data-act="rep-dismiss" data-id="${esc(r.id)}">Dismiss Report</button>
+      </div></div>`;
+  }).join('') : '<div class="card muted small">No open reports.</div>';
+  $('reportDone').innerHTML = done.length ? done.slice(0, 20).map(r => `<div class="card" style="opacity:.6"><b>${esc(r.reason)}</b> <span class="status-pill ${r.status === 'actioned' ? 'active' : 'pending'}">${esc(r.status)}</span><p class="muted small" style="margin:4px 0 0">${esc(r.targetLabel || r.target)} · ${esc(r.outcome || '')} · ${esc(ago(r.resolvedAt || r.ts))}</p></div>`).join('') : '<div class="muted small">Nothing resolved yet.</div>';
+  const b = $('reportBadge'); b.textContent = open.length; b.style.display = open.length ? '' : 'none';
+  $('stReports').textContent = open.length;
+}
+function resolveReport(id, status, outcome) {
+  const r = B.get('reports', id); if (!r) return;
+  B.put('reports', id, { status, outcome, resolvedAt: Date.now(), resolvedBy: ADMIN });
+  audit('Report ' + status, (r.targetLabel || r.target) + ' · ' + r.reason);
+  toast('Report action completed: ' + (status === 'dismissed' ? 'Dismissed' : 'Action taken'));
+}
+
+/* ---- audit log ---- */
+function renderAudit(list) {
+  $('auditTable').querySelector('tbody').innerHTML = list.length ? list.slice(0, 100).map(a => `<tr><td>${esc(ago(a.ts))}</td><td>${esc(a.admin)}</td><td>${esc(a.action)}</td><td>${esc(a.target)}</td></tr>`).join('') : '<tr><td colspan="4" class="muted">No admin actions yet.</td></tr>';
+}
+
+/* ---- settings ---- */
+function renderSettings() {
+  const s = B.get('settings', 'main'); if (!s) return;
+  const inside = document.activeElement && $('settings').contains(document.activeElement);
+  if (inside) return;
+  if (s.platformName) $('setName').value = s.platformName;
+  $('setApproval').value = s.requireApproval === false ? 'no' : 'yes';
+}
+function saveSettings() {
+  const name = $('setName').value.trim();
+  if (!name) { toast('Platform name is required'); return; }
+  B.put('settings', 'main', { platformName: name, requireApproval: $('setApproval').value !== 'no' });
+  audit('Saved system settings', name + ' · approval ' + ($('setApproval').value !== 'no' ? 'on' : 'off'));
+  toast('System Settings Saved Successfully!');
+}
+
+/* ---- click routing for rows rendered from data ---- */
+const ACT = {
+  'ann-del': id => { B.remove('announcements', id); audit('Deleted announcement', id); toast('Announcement deleted'); },
+  'user-edit': editUser,
+  'role-save': saveRole,
+  'ban-go': (id, b) => confirmBan(id, b.dataset.rid),
+  'rej-go': rejectMaterial,
+  'user-ban': id => banModal(id),
+  'user-unban': unban,
+  'study-view': viewStudy, 'study-ok': approveMaterial, 'study-no': rejectModal, 'study-del': deleteStudy,
+  'rep-ban': id => { const r = B.get('reports', id); if (r) banModal(r.target, id, r.reason); },
+  'rep-act': id => resolveReport(id, 'actioned', 'Action taken by an admin'),
+  'rep-dismiss': id => resolveReport(id, 'dismissed', 'Dismissed. No violation found')
+};
+document.addEventListener('click', e => { const b = e.target.closest('[data-act]'); if (b && ACT[b.dataset.act]) ACT[b.dataset.act](b.dataset.id, b); });
+
+/* ---- live data ---- */
+function startAdmin() {
+B.on('users', l => { renderUsers(l); $('stUsers').textContent = l.length; $('stBanned').textContent = l.filter(u => u.status === 'banned').length + ' banned'; });
+B.on('study', renderStudy);
+B.on('reports', renderReports);
+B.on('announcements', renderAnn);
+B.on('audit', renderAudit);
+B.on('settings', renderSettings);
+$('modeBtn').textContent = B.mode() === 'firebase' ? '🟢 Firebase live' : '🟡 Local demo';
+if (B.mode() === 'local') {
+  const n = $('demoNote'); n.style.display = 'block';
+  n.textContent = 'Local demo mode: data is stored in this browser and shared live with the NexChat user app when both are opened from the same website address. Anyone who can open this page can use it, so connect Firebase Auth and require an admin account before going live.';
+}
+}
+
+/* ----- admin gate: Firebase login + admins/{uid} check ----- */
+(function gate() {
+  if (B.mode() !== 'firebase') { startAdmin(); return; }
+  const root = document.documentElement, err = $('admErr'); let busy = false, started = false;
+  const msg = (m) => { err.textContent = m || ''; };
+  const nice = (e) => { const c = (e && e.code) || '';
+    if (c === 'auth/invalid-credential' || c === 'auth/wrong-password' || c === 'auth/user-not-found' || c === 'auth/invalid-login-credentials') return 'Wrong email or password.';
+    if (c === 'auth/too-many-requests') return 'Too many tries. Wait a few minutes.';
+    if (c === 'auth/network-request-failed') return 'No internet. Check your connection.';
+    if (c === 'auth/invalid-email') return 'Email address is not correct.';
+    return (e && e.message) || 'Login failed.'; };
+  $('admForm').addEventListener('submit', async ev => {
+    ev.preventDefault(); if (busy) return;
+    const email = $('admEmail').value.trim(), pw = $('admPw').value;
+    if (!email || !pw) return msg('Enter email and password.');
+    busy = true; $('admGo').disabled = true; msg('');
+    try { await B.auth.signIn(email, pw); } catch (e) { msg(nice(e)); }
+    busy = false; $('admGo').disabled = false;
+  });
+  B.auth.onChange(async u => {
+    if (!u) { root.classList.add('adm-locked'); return; }
+    if (await B.auth.isAdmin()) {
+      ADMIN = u.email || u.uid; root.classList.remove('adm-locked');
+      if (!started) { started = true; startAdmin(); }
+    } else {
+      await B.auth.signOut(); root.classList.add('adm-locked');
+      msg('This account is not an admin. (Your UID: ' + u.uid + ')');
+    }
+  });
+})();
+</script>
+</body>
+</html>
