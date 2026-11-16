@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover, interactive-widget=resizes-visual">
 <meta name="theme-color" content="#09090d">
 <meta name="referrer" content="origin">
 <title>NexChat — Social, Study & Community (v2.7)</title>
@@ -2199,12 +2199,13 @@ function bindMedia(st,it){if(it.kind==='text')return;const el=$('.ce-m>img,.ce-m
 function textPanel(it,idx,repaint){let l=idx==null?null:it.layers[idx],isNew=!l;if(!l){l={t:'text',v:'',x:50,y:it.kind==='text'?50:42,s:9,c:'#ffffff',bg:''};it.layers.push(l);idx=it.layers.length-1}
  const s=sheet(`<input type="text" id="ceTv" maxlength="120" placeholder="Type something…" value="${esc(l.v)}"><div class="ce-row">${COLS.map(c=>`<button class="ce-sw ${c===l.c?'on':''}" data-c="${c}" style="background:${c}" aria-label="Colour ${c}"></button>`).join('')}<button class="ce-chip ${l.bg?'on':''}" data-bg="1">Highlight</button></div><label>Size</label><input type="range" id="ceTs" min="5" max="18" value="${l.s}"><button class="ce-go" style="width:100%;margin-top:12px" data-done="1">Done</button>`,true);
  const up=()=>{l.v=$('#ceTv',s).value;l.s=+$('#ceTs',s).value;repaint()};
- $('#ceTv',s).oninput=up;$('#ceTs',s).oninput=up;$('#ceTv',s).focus();
- s.onclick=e=>{const c=e.target.closest('[data-c]'),b=e.target.closest('[data-bg]');if(c){l.c=c.dataset.c;$$('[data-c]',s).forEach(x=>x.classList.toggle('on',x===c));repaint()}else if(b){l.bg=l.bg?'':(l.c==='#111111'||l.c==='#ffd84d'?'#ffffffcc':'#000000aa');b.classList.toggle('on',!!l.bg);repaint()}else if(e.target.closest('[data-done]')){if(!l.v.trim()){it.layers.splice(idx,1)}s.remove();repaint()}}}
+ $('#ceTv',s).oninput=up;$('#ceTs',s).oninput=up;try{navigator.virtualKeyboard&&(navigator.virtualKeyboard.overlaysContent=true)}catch(e){}$('#ceTv',s).focus({preventScroll:true});
+ s.onclick=e=>{const c=e.target.closest('[data-c]'),b=e.target.closest('[data-bg]');if(c){l.c=c.dataset.c;$$('[data-c]',s).forEach(x=>x.classList.toggle('on',x===c));repaint()}else if(b){l.bg=l.bg?'':(l.c==='#111111'||l.c==='#ffd84d'?'#ffffffcc':'#000000aa');b.classList.toggle('on',!!l.bg);repaint()}else if(e.target.closest('[data-done]')){if(!l.v.trim()){it.layers.splice(idx,1)}s.remove();try{navigator.virtualKeyboard&&(navigator.virtualKeyboard.overlaysContent=false)}catch(e){}repaint()}}}
 function stickerPanel(it,repaint){const s=sheet(`<h3>Stickers</h3><div class="ce-row" style="flex-wrap:wrap">${EMO.map(e=>`<button class="ce-emo" data-e="${e}">${e}</button>`).join('')}</div>`);s.onclick=e=>{const b=e.target.closest('[data-e]');if(b){it.layers.push({t:'sticker',v:b.dataset.e,x:50,y:45,s:22});s.remove();repaint()}else if(e.target===s)s.remove()}}
 function filterPanel(it,apply,clear){const s=sheet(`<div class="ce-row">${FIL.map((f,i)=>`<button class="ce-chip ${f[1]===it.filter?'on':''}" data-f="${i}">${f[0]}</button>`).join('')}</div><button class="ce-go" style="width:100%;margin-top:8px" data-done="1">Done</button>`,clear);s.onclick=e=>{const b=e.target.closest('[data-f]');if(b){it.filter=FIL[+b.dataset.f][1];$$('[data-f]',s).forEach(x=>x.classList.toggle('on',x===b));apply()}else if(e.target.closest('[data-done]')||e.target===s)s.remove()}}
 const trackCard=()=>'<div id="ceTrackCard" class="ce-track"></div>';
-function musicTool(){const s=sheet(`<h3>Add music</h3><button class="ce-tile" data-k="yt"><span>${I(IC.music)}</span><span><b>Search a song</b><small>YouTube. Some songs block playback outside YouTube.</small></span></button><button class="ce-tile" data-k="lib"><span>${I(IC.music)}</span><span><b>Trending &amp; Library</b><small>Hindi, English, Bangla songs · no ads · add your own</small></span></button><button class="ce-tile" data-k="dev"><span>${I(IC.plus)}</span><span><b>Audio from this device</b><small>Always plays. Use audio you have rights to.</small></span></button>${S&&S.audio?'<button class="ce-link" data-k="rm">Remove device audio</button>':''}`);
+window.nxSetAudio=t=>{if(!S)return;S.audio={url:t.url,name:t.title+(t.artist?' · '+t.artist:''),remote:1};toast('Music added')};
+function musicTool(){const s=sheet(`<h3>Add music</h3><button class="ce-tile" data-k="lib"><span>${I(IC.music)}</span><span><b>NexMusic</b><small>Trending, viral &amp; your own library · no ads</small></span></button><button class="ce-tile" data-k="dev"><span>${I(IC.plus)}</span><span><b>Audio from this device</b><small>Always plays. Use audio you have rights to.</small></span></button>${S&&S.audio?'<button class="ce-link" data-k="rm">Remove device audio</button>':''}`);
  s.onclick=e=>{const k=e.target.closest('[data-k]');if(!k){if(e.target===s)s.remove();return}s.remove();const v=k.dataset.k;
   if(v==='lib')window.nxMusicOpen&&window.nxMusicOpen(t=>{if(!S)return;S.audio={url:t.url,name:t.title+(t.artist?' · '+t.artist:''),remote:1};toast('Music added')});else if(v==='yt')window.openMusicSearch&&window.openMusicSearch('ceTrack');
   else if(v==='rm'){S.audio=null;Snd.stop()}
@@ -2828,49 +2829,52 @@ window.endDemoCall=function(){if(callRef){F.updateDoc(callRef,{status:'ended'}).
 })()}
 </script>
 <script type="module">
-/* ===== NexChat Music: iTunes trending/search (30s best-part previews) + shared user music library ===== */
+/* ===== NexMusic: iTunes trending/search (30s best-part previews) + shared user library ===== */
 const B=NexBridge;if(B.mode()==='firebase')await B.ready();
 let F=null,db=null;
 try{const base='https://www.gstatic.com/firebasejs/10.12.2/',[{getApp},fs]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-firestore.js')]);F=fs;db=fs.getFirestore(getApp())}catch(e){}
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const au=new Audio();let root=null,tab='trend',lang='Hindi',cb=null,items=[];
-const css=document.createElement('style');css.textContent=`#nxM{position:fixed;inset:0;z-index:600;background:#0d0d14;color:#fff;display:flex;flex-direction:column;font-family:inherit}
-#nxM .h{display:flex;align-items:center;gap:10px;padding:14px;padding-top:calc(14px + env(safe-area-inset-top,0px))}#nxM .h b{flex:1;font-size:17px}
-#nxM button{font:inherit;color:inherit;border:0;background:#ffffff14;border-radius:12px;padding:9px 13px}#nxM .on{background:linear-gradient(135deg,#ff2690,#9857ff)}
-#nxM .tabs,#nxM .langs{display:flex;gap:8px;padding:0 14px 10px;overflow-x:auto}#nxM input[type=search]{margin:0 14px 10px;padding:11px 14px;border-radius:12px;border:1px solid #ffffff22;background:#16161e;color:#fff}
-#nxM .l{flex:1;overflow:auto;padding:0 14px 20px}#nxM .r{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid #ffffff10}
-#nxM .r img,#nxM .r .ph{width:52px;height:52px;border-radius:10px;object-fit:cover;background:#2a2a38;flex:none}#nxM .r div{flex:1;min-width:0}#nxM .r b,#nxM .r small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#nxM .r small{opacity:.65;font-size:12px}
-#nxM .e{opacity:.6;text-align:center;padding:40px 10px}`;document.head.appendChild(css);
+const au=new Audio();let root=null,tab='trend',cb=null,items=[];
+const TABS=[['trend','🔥 Trending'],['viral','⚡ Viral'],['new','🆕 New'],['romantic','💖 Romantic'],['sad','😢 Sad'],['party','🎉 Party'],['lofi','🌙 Lo-fi'],['hiphop','🎤 Hip-hop'],['search','🔍 Search'],['lib','📚 Library']];
+const Q={viral:['viral reels songs','tiktok viral hits','bangla viral song'],new:['new hindi songs 2026','new english songs 2026','new bangla songs'],romantic:['hindi romantic songs','english love songs','bangla romantic song'],sad:['hindi sad songs','english sad songs','bangla sad song'],party:['hindi party songs','english party hits','bangla dj songs'],lofi:['lofi hindi','lofi chill beats','bangla lofi'],hiphop:['hindi rap','english hip hop hits','bangla rap']};
+const css=document.createElement('style');css.textContent=`#nxM{position:fixed;inset:0;z-index:600;color:#fff;display:flex;flex-direction:column;font-family:inherit;background:radial-gradient(60% 40% at 15% 0%,#ff269055,transparent 70%),radial-gradient(55% 40% at 95% 30%,#9857ff55,transparent 70%),radial-gradient(60% 40% at 30% 100%,#2f6bff44,transparent 70%),#0b0b12}
+#nxM .h{display:flex;align-items:center;gap:10px;padding:14px;padding-top:calc(14px + env(safe-area-inset-top,0px))}#nxM .h b{flex:1;font-size:20px;letter-spacing:.3px;background:linear-gradient(90deg,#fff,#d9c2ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+#nxM button{font:inherit;color:#fff;border:1px solid #ffffff2e;background:#ffffff1a;-webkit-backdrop-filter:blur(16px) saturate(170%);backdrop-filter:blur(16px) saturate(170%);border-radius:14px;padding:9px 13px;box-shadow:inset 0 1px 0 #ffffff40}
+#nxM .on{background:linear-gradient(135deg,#ff2690cc,#9857ffcc);border-color:#ffffff55}
+#nxM .tabs{display:flex;gap:8px;padding:0 14px 10px;overflow-x:auto;scrollbar-width:none}#nxM .tabs button{white-space:nowrap;flex:none}
+#nxM input[type=search]{margin:0 14px 10px;padding:12px 15px;border-radius:14px;border:1px solid #ffffff2e;background:#ffffff14;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);color:#fff;outline:0}
+#nxM .l{flex:1;overflow:auto;padding:0 14px 24px}
+#nxM .r{display:flex;align-items:center;gap:11px;padding:10px;margin-bottom:10px;border-radius:18px;background:linear-gradient(135deg,#ffffff1f,#ffffff0a);border:1px solid #ffffff26;-webkit-backdrop-filter:blur(20px) saturate(170%);backdrop-filter:blur(20px) saturate(170%);box-shadow:0 8px 24px #0006,inset 0 1px 0 #ffffff30}
+#nxM .r img,#nxM .r .ph{width:52px;height:52px;border-radius:12px;object-fit:cover;background:#2a2a38;flex:none}#nxM .r div{flex:1;min-width:0}#nxM .r b,#nxM .r small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#nxM .r small{opacity:.7;font-size:12px}
+#nxM .e{opacity:.7;text-align:center;padding:40px 10px}`;document.head.appendChild(css);
 
-const norm=r=>({id:'i'+r.trackId,title:r.trackName,artist:r.artistName,art:(r.artworkUrl100||'').replace('100x100','200x200'),url:r.previewUrl}); 
+const norm=r=>({id:'i'+r.trackId,title:r.trackName,artist:r.artistName,art:(r.artworkUrl100||'').replace('100x100','200x200'),url:r.previewUrl});
 const J=async u=>{const r=await fetch(u);if(!r.ok)throw 0;return r.json()};
-const CC={Hindi:'in',English:'us',Bangla:'in'};
-async function search(q,lg){const cc=CC[lg]||'in';const d=await J('https://itunes.apple.com/search?media=music&entity=song&limit=30&country='+cc+'&term='+encodeURIComponent(q));return d.results.filter(r=>r.previewUrl).map(norm)}
-async function trending(lg){
- if(lg==='Bangla')return search('bangla top hits','Bangla');
- const cc=CC[lg];
- try{const c=await J('https://rss.applemarketingtools.com/api/v2/'+cc+'/music/most-played/25/songs.json');const ids=c.feed.results.map(x=>x.id).join(',');
-  const d=await J('https://itunes.apple.com/lookup?country='+cc+'&id='+ids);const out=d.results.filter(r=>r.previewUrl).map(norm);if(out.length)return out}catch(e){}
- return search(lg==='Hindi'?'top hindi songs':'top hits',lg)}
+async function search(q,cc){const d=await J('https://itunes.apple.com/search?media=music&entity=song&limit=20&country='+cc+'&term='+encodeURIComponent(q));return d.results.filter(r=>r.previewUrl).map(norm)}
+async function chart(cc){const c=await J('https://rss.applemarketingtools.com/api/v2/'+cc+'/music/most-played/25/songs.json');const d=await J('https://itunes.apple.com/lookup?country='+cc+'&id='+c.feed.results.map(x=>x.id).join(','));return d.results.filter(r=>r.previewUrl).map(norm)}
+const ccOf=q=>/english|tiktok|love|lofi chill/.test(q)?'us':'in';
+async function merge(jobs){const rs=(await Promise.allSettled(jobs)).filter(x=>x.status==='fulfilled').map(x=>x.value),seen=new Set(),out=[];
+ for(let i=0;i<40;i++)rs.forEach(a=>{const t=a[i];if(t&&!seen.has(t.id)){seen.add(t.id);out.push(t)}});return out.slice(0,45)}
 async function library(){if(!db)return[];const s=await F.getDocs(F.query(F.collection(db,'music'),F.orderBy('ts','desc'),F.limit(60)));return s.docs.map(d=>({id:d.id,...d.data()}))}
-
+async function get(q){
+ if(tab==='trend')return merge([chart('in'),chart('us'),search('bangla top hits','in')]);
+ if(tab==='search')return q?merge([search(q,'in'),search(q,'us')]):[];
+ if(tab==='lib')return library();
+ return merge(Q[tab].map(x=>search(x,ccOf(x))))}
 async function load(q){const L=root.querySelector('.l');L.innerHTML='<div class="e">Loading…</div>';
- try{items=tab==='trend'?await trending(lang):tab==='search'?(q?await search(q,lang):[]):await library()}catch(e){items=[];L.innerHTML='<div class="e">Load hoy ni. Internet check koro.</div>';return}
- paint()}
+ try{items=await get(q)}catch(e){items=[];L.innerHTML='<div class="e">Load hoy ni. Internet check koro.</div>';return}paint()}
 function paint(){const L=root.querySelector('.l');
  if(!items.length){L.innerHTML='<div class="e">'+(tab==='lib'?'Library te ekhono kono gaan nei. "Add my song" chap.':tab==='search'?'Gaan er naam likhe search koro.':'Kichu paowa jay ni.')+'</div>';return}
  L.innerHTML=items.map((t,i)=>`<div class="r">${t.art?`<img src="${esc(t.art)}" alt="">`:'<div class="ph"></div>'}<div><b>${esc(t.title)}</b><small>${esc(t.artist||'')}</small></div><button data-p="${i}">▶</button><button class="on" data-u="${i}">Use</button></div>`).join('')}
 function open(callback){cb=callback;if(root)root.remove();root=document.createElement('div');root.id='nxM';
- root.innerHTML=`<div class="h"><button data-x>✕</button><b>Music</b>${db?'<button data-add>＋ Add my song</button>':''}</div>
- <div class="tabs"><button data-t="trend" class="on">Trending</button><button data-t="search">Search</button><button data-t="lib">Library</button></div>
- <div class="langs">${['Hindi','English','Bangla'].map(l=>`<button data-l="${l}" class="${l===lang?'on':''}">${l}</button>`).join('')}</div>
+ root.innerHTML=`<div class="h"><button data-x>✕</button><b>NexMusic</b>${db?'<button data-add>＋ Add my song</button>':''}</div>
+ <div class="tabs">${TABS.map(([k,n])=>`<button data-t="${k}" class="${k===tab?'on':''}">${n}</button>`).join('')}</div>
  <input type="search" placeholder="Song ba artist er naam…" hidden><div class="l"></div><input type="file" accept="audio/*" hidden id="nxMf">`;
  document.body.appendChild(root);tab='trend';load();
  const si=root.querySelector('input[type=search]');let tm;si.oninput=()=>{clearTimeout(tm);tm=setTimeout(()=>load(si.value.trim()),450)};
  root.onclick=e=>{const b=e.target.closest('button');if(!b)return;
   if(b.dataset.x!==undefined){au.pause();root.remove();root=null}
-  else if(b.dataset.t){tab=b.dataset.t;root.querySelectorAll('[data-t]').forEach(x=>x.classList.toggle('on',x===b));si.hidden=tab!=='search';root.querySelector('.langs').style.display=tab==='lib'?'none':'flex';load(si.value.trim())}
-  else if(b.dataset.l){lang=b.dataset.l;root.querySelectorAll('[data-l]').forEach(x=>x.classList.toggle('on',x===b));load(si.value.trim())}
+  else if(b.dataset.t){tab=b.dataset.t;root.querySelectorAll('[data-t]').forEach(x=>x.classList.toggle('on',x===b));si.hidden=tab!=='search';load(si.value.trim())}
   else if(b.dataset.p!==undefined){const t=items[+b.dataset.p];if(au.src===t.url&&!au.paused){au.pause();b.textContent='▶'}else{root.querySelectorAll('[data-p]').forEach(x=>x.textContent='▶');au.src=t.url;au.play().catch(()=>{});b.textContent='❚❚'}}
   else if(b.dataset.u!==undefined){au.pause();const t=items[+b.dataset.u];root.remove();root=null;cb&&cb(t)}
   else if(b.dataset.add!==undefined)root.querySelector('#nxMf').click()};
@@ -2880,8 +2884,17 @@ async function addSong(e){const f=e.target.files[0];e.target.value='';if(!f)retu
   else{if(f.size>600000){toast('File boro (max ~600 KB). Boro gaan er jonno Storage lagbe.');return}
    url=await new Promise((r,j)=>{const x=new FileReader();x.onload=()=>r(x.result);x.onerror=j;x.readAsDataURL(f)})}
   const me=window.NEX_SESSION||{};await F.addDoc(F.collection(db,'music'),{title:f.name.replace(/\.[^.]+$/,''),artist:me.name||me.handle||'User',by:me.handle||'',url,ts:Date.now()});
-  toast('Gaan Library te add hoyeche');if(tab==='lib')load()}catch(x){toast('Add kora gelo na')}}
-window.nxMusicOpen=open;
+  toast('Gaan NexMusic Library te add hoyeche');if(tab==='lib')load()}catch(x){toast('Add kora gelo na')}}
+window.nxMusicOpen=open;window.openMusicSearch=()=>open(t=>window.nxSetAudio&&window.nxSetAudio(t));
 </script>
+<style id="nxFix">
+/* text: wrap width must not depend on position, so lines never jumble while dragging */
+.ce-lay{width:max-content;max-width:90%;overflow-wrap:anywhere}
+/* reels/videos: keep original ratio, no cropping */
+.ce-reel .ce-m>video,.ce-reel .ce-m>img,.ce-edit .ce-m>video{object-fit:contain!important;background:#000}
+/* keyboard overlays instead of moving the story */
+.ce-sheetbg.clear{padding-bottom:env(keyboard-inset-height,0px)}
+</style>
+
 </body>
 </html>
